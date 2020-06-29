@@ -4,3 +4,8 @@ build
 .apt_generated
 dist/actionbarextras.jar
 node_modules
+java-sources.txt
+build.properties
+.DS_Store
+.gradle
+.settings

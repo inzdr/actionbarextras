@@ -406,7 +406,7 @@ public class ActionbarextrasModule extends KrollModule {
 
 	/**
 	 * Sets Actionbar title font
-	 * @param obj
+	 * @param font
 	 */
 	private void handleSetTitleFont(Object font){
 		TiApplication appContext = TiApplication.getInstance();

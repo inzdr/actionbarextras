@@ -89,6 +89,7 @@ public class ActionbarextrasModule extends KrollModule {
 	private static final int MSG_TOOLBAR_TOP_PADDING = MSG_FIRST_ID + 122;
 	private static final int MSG_SET_ACTIONBAR_IMAGE = MSG_FIRST_ID + 123;
 	private static final int MSG_DISABLE_ACTIONBAR_IMAGE = MSG_FIRST_ID + 124;
+	private static final int MSG_WINDOW_LIGHT_STATUS_BAR = MSG_FIRST_ID + 125;
 
 	protected static final int MSG_LAST_ID = MSG_FIRST_ID + 999;
 
@@ -153,7 +154,7 @@ public class ActionbarextrasModule extends KrollModule {
 
 	}
 
-	private IconDrawable getDrawableFromFont(HashMap args) {
+	private IconDrawable getDrawableFromFont(KrollDict args) {
 		Typeface iconFontTypeface = TiUIHelper.toTypeface(TiApplication.getInstance(), (String) args.get(TiC.PROPERTY_FONTFAMILY));
 		return new IconDrawable(TiApplication.getInstance(), (String) args.get(TiC.PROPERTY_ICON), iconFontTypeface).actionBarSize().color(TiConvert.toColor((String) args.get(TiC.PROPERTY_COLOR)));
 	}
@@ -259,6 +260,10 @@ public class ActionbarextrasModule extends KrollModule {
 			}
 			case MSG_DISPLAY_USELOGO: {
 				handleDisplayUseLogoEnabled((Boolean) msg.obj);
+				return true;
+			}
+			case MSG_WINDOW_LIGHT_STATUS_BAR: {
+				handleSetWindowLightStatusBar((Boolean) msg.obj);
 				return true;
 			}
 			case MSG_TOOLBAR_TOP_PADDING: {
@@ -375,7 +380,7 @@ public class ActionbarextrasModule extends KrollModule {
 			}
 			Window win = activity.getWindow();
 			win.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-			win.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+			//win.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 			win.setStatusBarColor(TiConvert.toColor(color));
 		}
 	}
@@ -399,7 +404,7 @@ public class ActionbarextrasModule extends KrollModule {
 			}
 			Window win = activity.getWindow();
 			win.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-			win.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+			//win.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
 			win.setNavigationBarColor(TiConvert.toColor(color));
 		}
 	}
@@ -589,8 +594,8 @@ public class ActionbarextrasModule extends KrollModule {
 			return;
 		}
 
-		if (obj instanceof HashMap) {
-			HashMap args = (HashMap) obj;
+		if (obj instanceof KrollDict) {
+			KrollDict args = (KrollDict) obj;
 			actionBar.setHomeAsUpIndicator(getDrawableFromFont(args));
 		} else if (obj instanceof String) {
 			int resId = TiUIHelper.getResourceId(resolveUrl(null, (String)obj));
@@ -652,10 +657,10 @@ public class ActionbarextrasModule extends KrollModule {
 	 * @param obj
 	 */
 	private void handleSetLogo(Object obj){
-		HashMap args;
+		KrollDict args;
 
-		if (obj instanceof HashMap){
-			args = (HashMap) obj;
+		if (obj instanceof KrollDict){
+			args = (KrollDict) obj;
 		} else {
 			Log.e(TAG, "Please pass an Object to setLogo");
 			return;
@@ -675,10 +680,10 @@ public class ActionbarextrasModule extends KrollModule {
 	 * @param obj
 	 */
 	private void handleSetMenuItemIcon(Object obj){
-		HashMap args;
+		KrollDict args;
 
-		if (obj instanceof HashMap){
-			args = (HashMap) obj;
+		if (obj instanceof KrollDict){
+			args = (KrollDict) obj;
 		} else {
 			Log.e(TAG, "Please pass an Object to setMenuItem");
 			return;
@@ -744,13 +749,13 @@ public class ActionbarextrasModule extends KrollModule {
 	 * @param obj
 	 */
 	private void handleSetActionbarImage(Object obj){
-		HashMap args;
+		KrollDict args;
 		Object image;
 
 		// Perform some validation ...
 
-		if (obj instanceof HashMap){
-			args = (HashMap) obj;
+		if (obj instanceof KrollDict){
+			args = (KrollDict) obj;
 		} else {
 			Log.e(TAG, "Please pass an Object to setActionbarImage");
 			return;
@@ -818,7 +823,7 @@ public class ActionbarextrasModule extends KrollModule {
 			// If view is null, them it means that we didn't inflate it yet.
 			if (view == null) {
 				// Inflate our actionbar's custom layout in a view
-				LayoutInflater inflator = (LayoutInflater) activity.getLayoutInflater();
+				LayoutInflater inflator = activity.getLayoutInflater();
 				view = inflator.inflate(resources.getIdentifier("actionbar_centered_logo_layout", "layout", packageName), null);
 
 				// Set the custom view at the center of actionbar
@@ -933,10 +938,10 @@ public class ActionbarextrasModule extends KrollModule {
 	private void handleSetSearchView(Object obj){
 
 		SearchView searchView;
-		HashMap args;
+		KrollDict args;
 
-		if (obj instanceof HashMap){
-			args = (HashMap) obj;
+		if (obj instanceof KrollDict){
+			args = (KrollDict) obj;
 		} else {
 			Log.e(TAG, "Please pass an Object to setSearchViewBackground");
 			return;
@@ -1145,6 +1150,36 @@ public class ActionbarextrasModule extends KrollModule {
 	}
 
 	/**
+	 * Set the status bar light mode (true/false)
+	 * @param useLogo
+	 */
+	private void handleSetWindowLightStatusBar(Boolean on){
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			AppCompatActivity activity;
+			if (window != null){
+				activity = (AppCompatActivity) window.getActivity();
+			} else {
+				TiApplication appContext = TiApplication.getInstance();
+				activity = (AppCompatActivity) appContext.getCurrentActivity();
+			}
+			if (activity == null) {
+				return;
+			}
+			try
+			{
+				View view = activity.getWindow().getDecorView();
+				if (on) {
+					view.setSystemUiVisibility(view.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+				} else {
+					view.setSystemUiVisibility(view.getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+				}
+			} catch (Exception ex) {
+				Log.e(TAG, "Exception setting the LightStatusBar to " + on + " -> " + ex.getMessage(), ex);
+			}
+		}
+	}
+
+	/**
 	 * Helper function to process font objects used for title and subtitle
 	 *
 	 * @param appContext - TiApplication context
@@ -1212,10 +1247,10 @@ public class ActionbarextrasModule extends KrollModule {
 		}else if(obj instanceof HashMap){
 			@SuppressWarnings("unchecked")
 			HashMap<String, String> d = (HashMap<String, String>) obj;
-			title = (String) d.get(TiC.PROPERTY_TEXT);
+			title = d.get(TiC.PROPERTY_TEXT);
 
 			if (d.containsKey(TiC.PROPERTY_COLOR)){
-				setTitleColor((String) d.get(TiC.PROPERTY_COLOR));
+				setTitleColor(d.get(TiC.PROPERTY_COLOR));
 			}
 
 			if (d.containsKey(TiC.PROPERTY_FONT)){
@@ -1250,10 +1285,10 @@ public class ActionbarextrasModule extends KrollModule {
 		}else if(obj instanceof HashMap){
 			@SuppressWarnings("unchecked")
 			HashMap<String, String> d = (HashMap<String, String>) obj;
-			subtitle = (String) d.get(TiC.PROPERTY_TEXT);
+			subtitle = d.get(TiC.PROPERTY_TEXT);
 
 			if (d.containsKey(TiC.PROPERTY_COLOR)){
-				setSubtitleColor((String) d.get(TiC.PROPERTY_COLOR));
+				setSubtitleColor(d.get(TiC.PROPERTY_COLOR));
 			}
 
 			if (d.containsKey(TiC.PROPERTY_FONT)){
@@ -1449,6 +1484,16 @@ public class ActionbarextrasModule extends KrollModule {
 	@Kroll.method @Kroll.setProperty
 	public void setSearchView(Object arg) {
 		Message message = getMainHandler().obtainMessage(MSG_SEARCHVIEW, arg);
+		message.sendToTarget();
+	}
+
+	/**
+	 * set light status bar value
+	 * @param obj
+	 */
+	@Kroll.method @Kroll.setProperty
+	public void setLightStatusBar(Object obj) {
+		Message message = getMainHandler().obtainMessage(MSG_WINDOW_LIGHT_STATUS_BAR, obj);
 		message.sendToTarget();
 	}
 

@@ -9,3 +9,4 @@ build.properties
 .DS_Store
 .gradle
 .settings
+dist
